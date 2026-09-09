@@ -6,7 +6,13 @@ var isHolding = {
   e: false
 };
 
-var hits = { perfect: 0, good: 0, bad: 0, miss: 0 };
+var hits = {
+  perfect: 0,
+  good: 0,
+  bad: 0,
+  miss: 0
+};
+
 var multiplier = {
   perfect: 1,
   good: 0.8,
@@ -15,6 +21,7 @@ var multiplier = {
   combo40: 1.05,
   combo80: 1.10
 };
+
 var isPlaying = false;
 var combo = 0;
 var maxCombo = 0;
@@ -47,64 +54,106 @@ var initializeNotes = function () {
       noteElement.style.animationDuration = note.duration + 's';
       noteElement.style.animationDelay = note.delay + 's';
       noteElement.style.animationPlayState = 'paused';
+
       trackElement.appendChild(noteElement);
     });
 
     trackContainer.appendChild(trackElement);
-    tracks = document.querySelectorAll('.track');
   });
-};
 
-var updateAnimation = function () {
-  animation = 'moveDownFade';
-  initializeNotes();
+  tracks = document.querySelectorAll('.track');
 };
 
 var setupStartButton = function () {
   var startButton = document.querySelector('.btn--start');
-  startButton.addEventListener('click', function () {
-    isPlaying = true;
-    startTime = Date.now();
 
-    startTimer(song.duration);
+  startButton.addEventListener('click', function (event) {
+    event.preventDefault();
+
+    if (isPlaying) {
+      return;
+    }
+
+    isPlaying = true;
+    startTime = performance.now();
+
     document.querySelector('.menu').style.opacity = 0;
-    document.querySelector('.song').play();
+
+    var songAudio = document.querySelector('.song');
+    songAudio.currentTime = 0;
+
+    var playPromise = songAudio.play();
+
+    if (playPromise !== undefined) {
+      playPromise.catch(function (error) {
+        console.error(error);
+        isPlaying = false;
+      });
+    }
+
     document.querySelectorAll('.note').forEach(function (note) {
       note.style.animationPlayState = 'running';
     });
+
+    startTimer(song.duration);
   });
 };
 
 var startTimer = function (duration) {
   var display = document.querySelector('.summary__timer');
-  var timer = duration;
-  var minutes;
-  var seconds;
+  var start = performance.now();
+  var durationMs = duration * 1000;
 
   display.style.display = 'block';
   display.style.opacity = 1;
 
-  var songDurationInterval = setInterval(function () {
-    minutes = Math.floor(timer / 60);
-    seconds = timer % 60;
+  var updateTimer = function () {
+    if (!isPlaying) {
+      return;
+    }
+
+    var elapsed = performance.now() - start;
+    var remaining = Math.max(0, durationMs - elapsed);
+
+    var totalSeconds = Math.ceil(remaining / 1000);
+    var minutes = Math.floor(totalSeconds / 60);
+    var seconds = totalSeconds % 60;
+
     minutes = minutes < 10 ? '0' + minutes : minutes;
     seconds = seconds < 10 ? '0' + seconds : seconds;
+
     display.innerHTML = minutes + ':' + seconds;
 
-    if (--timer < 0) {
-      clearInterval(songDurationInterval);
-	  
-	  isPlaying = false;
-	  
-	  var songAudio = document.querySelector('.song');
-      songAudio.pause();
-      songAudio.currentTime = 0;
-	  
-      showResult();
-      comboText.style.transition = 'all 1s';
-      comboText.style.opacity = 0;
+    if (remaining <= 0) {
+      finishGame();
+      return;
     }
-  }, 1000);
+
+    requestAnimationFrame(updateTimer);
+  };
+
+  requestAnimationFrame(updateTimer);
+};
+
+var finishGame = function () {
+  if (!isPlaying) {
+    return;
+  }
+
+  isPlaying = false;
+
+  var songAudio = document.querySelector('.song');
+  songAudio.pause();
+  songAudio.currentTime = 0;
+
+  document.querySelectorAll('.note').forEach(function (note) {
+    note.style.animationPlayState = 'paused';
+  });
+
+  showResult();
+
+  comboText.style.transition = 'all 1s';
+  comboText.style.opacity = 0;
 };
 
 var showResult = function () {
@@ -122,7 +171,6 @@ var showResult = function () {
   result.style.pointerEvents = 'auto';
 };
 
-
 var sendResultToDiscord = function () {
   var nameInput = document.querySelector('.result__name');
   var status = document.querySelector('.result__status');
@@ -131,13 +179,14 @@ var sendResultToDiscord = function () {
 
   if (!name) {
     status.innerHTML = 'Escribe un nombre.';
+    nameInput.focus();
     return;
   }
 
   var message = {
     username: 'Rhythm',
     embeds: [{
-      title: document.title,
+      title: 'Resultado - ' + document.title,
       color: 0x5865F2,
       fields: [
         {
@@ -203,43 +252,78 @@ var sendResultToDiscord = function () {
     });
 };
 
-
 var setupNoteMiss = function () {
   trackContainer.addEventListener('animationend', function (event) {
-    var index = event.target.classList.item(1)[6];
+    if (!event.target.classList.contains('note')) {
+      return;
+    }
+
+    if (!isPlaying) {
+      return;
+    }
+
+    var classes = event.target.classList;
+    var noteClass = Array.from(classes).find(function (className) {
+      return className.indexOf('note--') === 0;
+    });
+
+    if (!noteClass) {
+      return;
+    }
+
+    var index = parseInt(noteClass.replace('note--', ''), 10);
+
+    if (isNaN(index)) {
+      return;
+    }
 
     displayAccuracy('miss');
     updateHits('miss');
     updateCombo('miss');
     updateMaxCombo();
+
     removeNoteFromTrack(event.target.parentNode, event.target);
     updateNext(index);
   });
 };
 
-/**
- * Allows keys to be only pressed one time. Prevents keydown event
- * from being handled multiple times while held down.
- */
 var setupKeys = function () {
   document.addEventListener('keydown', function (event) {
-    var keyIndex = getKeyIndex(event.key);
+    var key = event.key.toLowerCase();
 
-    if (Object.keys(isHolding).indexOf(event.key) !== -1
-      && !isHolding[event.key]) {
-      isHolding[event.key] = true;
+    if (!Object.prototype.hasOwnProperty.call(isHolding, key)) {
+      return;
+    }
+
+    if (isHolding[key]) {
+      return;
+    }
+
+    isHolding[key] = true;
+
+    var keyIndex = getKeyIndex(key);
+
+    if (keypress[keyIndex]) {
       keypress[keyIndex].style.display = 'block';
+    }
 
-      if (isPlaying && tracks[keyIndex].firstChild) {
-        judge(keyIndex);
-      }
+    if (isPlaying && tracks[keyIndex] && tracks[keyIndex].firstChild) {
+      judge(keyIndex);
     }
   });
 
   document.addEventListener('keyup', function (event) {
-    if (Object.keys(isHolding).indexOf(event.key) !== -1) {
-      var keyIndex = getKeyIndex(event.key);
-      isHolding[event.key] = false;
+    var key = event.key.toLowerCase();
+
+    if (!Object.prototype.hasOwnProperty.call(isHolding, key)) {
+      return;
+    }
+
+    var keyIndex = getKeyIndex(key);
+
+    isHolding[key] = false;
+
+    if (keypress[keyIndex]) {
       keypress[keyIndex].style.display = 'none';
     }
   });
@@ -248,36 +332,50 @@ var setupKeys = function () {
 var getKeyIndex = function (key) {
   if (key === 'q') {
     return 0;
-  } else if (key === 'w') {
+  }
+
+  if (key === 'w') {
     return 1;
-  } else if (key === 'e') {
+  }
+
+  if (key === 'e') {
     return 2;
   }
+
+  return -1;
 };
 
 var judge = function (index) {
-  var timeInSecond = (Date.now() - startTime) / 1000;
-  var nextNoteIndex = song.sheet[index].next;
-  var nextNote = song.sheet[index].notes[nextNoteIndex];
-  var perfectTime = nextNote.duration + nextNote.delay;
-  var accuracy = Math.abs(timeInSecond - perfectTime);
-  var hitJudgement;
-
-  /**
-   * As long as the note has travelled less than 3/4 of the height of
-   * the track, any key press on this track will be ignored.
-   */
-  if (accuracy > (nextNote.duration - speed) / 4) {
+  if (!isPlaying) {
     return;
   }
 
-  hitJudgement = getHitJudgement(accuracy);
+  var nextNoteIndex = song.sheet[index].next;
+  var nextNote = song.sheet[index].notes[nextNoteIndex];
+
+  if (!nextNote) {
+    return;
+  }
+
+  var songAudio = document.querySelector('.song');
+  var currentTime = songAudio.currentTime;
+
+  var perfectTime = nextNote.delay + nextNote.duration;
+  var accuracy = Math.abs(currentTime - perfectTime);
+
+  if (accuracy > 0.3) {
+    return;
+  }
+
+  var hitJudgement = getHitJudgement(accuracy);
+
   displayAccuracy(hitJudgement);
   showHitEffect(index);
   updateHits(hitJudgement);
   updateCombo(hitJudgement);
   updateMaxCombo();
   calculateScore(hitJudgement);
+
   removeNoteFromTrack(tracks[index], tracks[index].firstChild);
   updateNext(index);
 };
@@ -285,64 +383,114 @@ var judge = function (index) {
 var getHitJudgement = function (accuracy) {
   if (accuracy < 0.1) {
     return 'perfect';
-  } else if (accuracy < 0.2) {
-    return 'good';
-  } else if (accuracy < 0.3) {
-    return 'bad';
-  } else {
-    return 'miss';
   }
+
+  if (accuracy < 0.2) {
+    return 'good';
+  }
+
+  if (accuracy < 0.3) {
+    return 'bad';
+  }
+
+  return 'miss';
 };
 
 var displayAccuracy = function (accuracy) {
+  var oldAccuracy = document.querySelector('.hit__accuracy');
+
+  if (oldAccuracy) {
+    oldAccuracy.remove();
+  }
+
   var accuracyText = document.createElement('div');
-  document.querySelector('.hit__accuracy').remove();
+
   accuracyText.classList.add('hit__accuracy');
   accuracyText.classList.add('hit__accuracy--' + accuracy);
   accuracyText.innerHTML = accuracy;
+
   document.querySelector('.hit').appendChild(accuracyText);
 };
 
 var showHitEffect = function (index) {
-  var key = document.querySelectorAll('.key')[index];
+  var keys = document.querySelectorAll('.key');
+  var key = keys[index];
+
+  if (!key) {
+    return;
+  }
+
   var hitEffect = document.createElement('div');
+
   hitEffect.classList.add('key__hit');
+
   key.appendChild(hitEffect);
+
+  setTimeout(function () {
+    if (hitEffect.parentNode) {
+      hitEffect.remove();
+    }
+  }, 1000);
 };
 
 var updateHits = function (judgement) {
-  hits[judgement]++;
+  if (hits[judgement] !== undefined) {
+    hits[judgement]++;
+  }
 };
 
 var updateCombo = function (judgement) {
   if (judgement === 'bad' || judgement === 'miss') {
     combo = 0;
     comboText.innerHTML = '';
-  } else {
-    comboText.innerHTML = ++combo;
+    return;
   }
+
+  combo++;
+  comboText.innerHTML = combo;
 };
 
 var updateMaxCombo = function () {
-  maxCombo = maxCombo > combo ? maxCombo : combo;
-};
-
-var calculateScore = function (judgement) {
-  if (combo >= 80) {
-    score += 1000 * multiplier[judgement] * multiplier.combo80;
-  } else if (combo >= 40) {
-    score += 1000 * multiplier[judgement] * multiplier.combo40;
-  } else {
-    score += 1000 * multiplier[judgement];
+  if (combo > maxCombo) {
+    maxCombo = combo;
   }
 };
 
+var calculateScore = function (judgement) {
+  var points = 1000;
+
+  if (judgement === 'perfect') {
+    points *= multiplier.perfect;
+  } else if (judgement === 'good') {
+    points *= multiplier.good;
+  } else if (judgement === 'bad') {
+    points *= multiplier.bad;
+  } else {
+    points *= multiplier.miss;
+  }
+
+  if (combo >= 80) {
+    points *= multiplier.combo80;
+  } else if (combo >= 40) {
+    points *= multiplier.combo40;
+  }
+
+  score += points;
+};
+
 var removeNoteFromTrack = function (parent, child) {
-  parent.removeChild(child);
+  if (parent && child && child.parentNode === parent) {
+    parent.removeChild(child);
+  }
 };
 
 var updateNext = function (index) {
-  song.sheet[index].next++;
+  if (
+    song.sheet[index] &&
+    song.sheet[index].next < song.sheet[index].notes.length
+  ) {
+    song.sheet[index].next++;
+  }
 };
 
 window.onload = function () {
@@ -361,4 +509,3 @@ window.onload = function () {
     sendButton.addEventListener('click', sendResultToDiscord);
   }
 };
-
