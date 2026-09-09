@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <title>A01 >> Paciencia divina</title>
+
+  <link rel="stylesheet" href="css/style.css">
+</head>
+
+<body>
+
+  <audio class="song" src="media/A01.mp3"></audio>
+
+  <main>
+    <div class="game">
+
+      <div class="hit">
+        <div class="hit__combo"></div>
+        <div class="hit__accuracy"></div>
+      </div>
+
+      <div class="track-container"></div>
+
+      <div class="key-container">
+
+        <div class="key key--q key--blue">
+          <div class="keypress keypress--blue"></div>
+          <span>Q</span>
+        </div>
+
+        <div class="key key--w key--red">
+          <div class="keypress keypress--red"></div>
+          <span>W</span>
+        </div>
+
+        <div class="key key--e key--orange">
+          <div class="keypress keypress--orange"></div>
+          <span>E</span>
+        </div>
+
+      </div>
+    </div>
+
+    <div class="menu">
+
+      <div>
+        <h1>Strixhaven</h1>
+		<h2>A warm place</h2>
+      </div>
+
+      <div class="menu__song">
+        <h2>Paciencia divina</h2>
+        <p>Selecciona Start para comenzar</p>
+      </div>
+
+      <div class="menu_start">
+        <a class="btn btn--primary btn--start" href="#">Start</a>
+      </div>
+
+    </div>
+
+    <div class="summary">
+
+      <div class="summary__timer"></div>
+
+      <div class="summary__result">
+
+        <h2 class="result__heading">Clear</h2>
+
+        <div class="result__accuracy perfect">
+          <p class="accuracy__heading">Perfect</p>
+          <span>:</span>
+          <p class="accuracy__count perfect__count"></p>
+        </div>
+
+        <div class="result__accuracy good">
+          <p class="accuracy__heading">Good</p>
+          <span>:</span>
+          <p class="accuracy__count good__count"></p>
+        </div>
+
+        <div class="result__accuracy bad">
+          <p class="accuracy__heading">Bad</p>
+          <span>:</span>
+          <p class="accuracy__count bad__count"></p>
+        </div>
+
+        <div class="result__accuracy miss">
+          <p class="accuracy__heading">Miss</p>
+          <span>:</span>
+          <p class="accuracy__count miss__count"></p>
+        </div>
+
+        <div class="result__accuracy combo">
+          <p class="accuracy__heading">Max Combo</p>
+          <span>:</span>
+          <p class="accuracy__count combo__count"></p>
+        </div>
+
+        <div class="result__accuracy score">
+          <p class="accuracy__heading">Score</p>
+          <span>:</span>
+          <p class="accuracy__count score__count"></p>
+        </div>
+
+		<div class="result__submit">
+
+		  <input
+			type="text"
+			class="result__name"
+			placeholder="Escribe tu nombre"
+			maxlength="20"
+			autocomplete="off"
+		  >
+
+		  <button type="button" class="btn btn--primary result__send">
+			Enviar resultado
+		  </button>
+
+		  <p class="result__status"></p>
+
+		</div>
+      </div>
+    </div>
+
+  </main>
+
+  <script src="songs/A01.js"></script>
+
+
+  <script src="scripts/script.js"></script>
+</body>
+</html>
