@@ -29,6 +29,10 @@ var e = {
 };
 
 var song = {
+  id: 'A01',
+  title: 'Paciencia divina',
+  subtitle: 'A warm place',
+  audio: 'media/A01.mp3',
   duration: 18,
   sheet: [q, w, e]
 };

@@ -4,16 +4,17 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <title>A01 >> Paciencia divina</title>
+  <title>Strixhaven</title>
 
   <link rel="stylesheet" href="css/style.css">
 </head>
 
 <body>
 
-  <audio class="song" src="media/A01.mp3"></audio>
+  <audio class="song"></audio>
 
   <main>
+
     <div class="game">
 
       <div class="hit">
@@ -46,12 +47,12 @@
     <div class="menu">
 
       <div>
-        <h1>Strixhaven</h1>
-		<h2>A warm place</h2>
+        <h1 class="game-title"></h1>
+        <h2 class="game-subtitle"></h2>
       </div>
 
       <div class="menu__song">
-        <h2>Paciencia divina</h2>
+        <h2 class="song-title"></h2>
         <p>Selecciona Start para comenzar</p>
       </div>
 
@@ -105,31 +106,31 @@
           <p class="accuracy__count score__count"></p>
         </div>
 
-		<div class="result__submit">
+        <div class="result__submit">
 
-		  <input
-			type="text"
-			class="result__name"
-			placeholder="Escribe tu nombre"
-			maxlength="20"
-			autocomplete="off"
-		  >
+          <input
+            type="text"
+            class="result__name"
+            placeholder="Escribe tu nombre"
+            maxlength="20"
+            autocomplete="off"
+          >
 
-		  <button type="button" class="btn btn--primary result__send">
-			Enviar resultado
-		  </button>
+          <button type="button" class="btn btn--primary result__send">
+            Enviar resultado
+          </button>
 
-		  <p class="result__status"></p>
+          <p class="result__status"></p>
 
-		</div>
+        </div>
+
       </div>
     </div>
 
   </main>
 
-  <script src="songs/A01.js"></script>
-
-
+  <script src="songs/songs.js"></script>
   <script src="scripts/script.js"></script>
+
 </body>
 </html>

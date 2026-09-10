@@ -1,5 +1,43 @@
 var DISCORD_WEBHOOK = 'https://discord.com/api/webhooks/1547345479132782725/evTPsL1Ywcq2ECpeRk9eb9OzJ51A-xYoZ8HyUk8jg_ZsGc21829T0clg0nPSJevEn8h5';
 
+const params = new URLSearchParams(window.location.search);
+const songId = params.get('song');
+
+var loadSong = function (callback) {
+  if (!songId) {
+    console.error('No se ha especificado ninguna canción.');
+    return;
+  }
+
+  var script = document.createElement('script');
+
+  script.src = 'songs/' + songId + '.js';
+
+  script.onload = function () {
+
+    console.log('Canción cargada:', song);
+
+    var songAudio = document.querySelector('.song');
+
+    songAudio.src = song.audio;
+
+    document.querySelector('.game-title').textContent = 'Strixhaven';
+    document.querySelector('.game-subtitle').textContent = song.subtitle;
+    document.querySelector('.song-title').textContent = song.title;
+
+    document.title = song.id + ' >> ' + song.title;
+
+    callback();
+  };
+
+  script.onerror = function () {
+    console.error('No se pudo cargar la canción:', songId);
+  };
+
+  document.body.appendChild(script);
+};
+
+
 var isHolding = {
   q: false,
   w: false,
@@ -528,23 +566,30 @@ var updateNext = function (index) {
 };
 
 window.onload = function () {
-  trackContainer = document.querySelector('.track-container');
-  keypress = document.querySelectorAll('.keypress');
-  comboText = document.querySelector('.hit__combo');
 
-  missSound = new Audio('media/miss.mp3');
-  hitSound = new Audio('media/hit.mp3');
-  missSound.preload = 'auto';
-  hitSound.preload = 'auto';
+  loadSong(function () {
 
-  initializeNotes();
-  setupStartButton();
-  setupKeys();
-  setupNoteMiss();
+    trackContainer = document.querySelector('.track-container');
+    keypress = document.querySelectorAll('.keypress');
+    comboText = document.querySelector('.hit__combo');
 
-  var sendButton = document.querySelector('.result__send');
+    missSound = new Audio('media/miss.mp3');
+    hitSound = new Audio('media/hit.mp3');
 
-  if (sendButton) {
-    sendButton.addEventListener('click', sendResultToDiscord);
-  }
+    missSound.preload = 'auto';
+    hitSound.preload = 'auto';
+
+    initializeNotes();
+    setupStartButton();
+    setupKeys();
+    setupNoteMiss();
+
+    var sendButton = document.querySelector('.result__send');
+
+    if (sendButton) {
+      sendButton.addEventListener('click', sendResultToDiscord);
+    }
+
+  });
+
 };
