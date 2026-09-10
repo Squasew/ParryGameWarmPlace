@@ -31,6 +31,8 @@ var trackContainer;
 var tracks;
 var keypress;
 var comboText;
+var missSound;
+var hitSound;
 
 var initializeNotes = function () {
   var noteElement;
@@ -278,6 +280,7 @@ var setupNoteMiss = function () {
     }
 
     displayAccuracy('miss');
+    playMissSound();
     updateHits('miss');
     updateCombo('miss');
     updateMaxCombo();
@@ -370,6 +373,7 @@ var judge = function (index) {
   var hitJudgement = getHitJudgement(accuracy);
 
   displayAccuracy(hitJudgement);
+  playHitSound(hitJudgement);
   showHitEffect(index);
   updateHits(hitJudgement);
   updateCombo(hitJudgement);
@@ -456,6 +460,36 @@ var updateMaxCombo = function () {
   }
 };
 
+var playHitSound = function (judgement) {
+  if (!hitSound) {
+    return;
+  }
+
+  if (
+    judgement !== 'perfect' &&
+    judgement !== 'good' &&
+    judgement !== 'bad'
+  ) {
+    return;
+  }
+
+  hitSound.currentTime = 0;
+  hitSound.play().catch(function (error) {
+    console.error('No se pudo reproducir el sonido de acierto:', error);
+  });
+};
+
+var playMissSound = function () {
+  if (!missSound) {
+    return;
+  }
+
+  missSound.currentTime = 0;
+  missSound.play().catch(function (error) {
+    console.error('No se pudo reproducir el sonido de fallo:', error);
+  });
+};
+
 var calculateScore = function (judgement) {
   var points = 1000;
 
@@ -497,6 +531,11 @@ window.onload = function () {
   trackContainer = document.querySelector('.track-container');
   keypress = document.querySelectorAll('.keypress');
   comboText = document.querySelector('.hit__combo');
+
+  missSound = new Audio('media/miss.mp3');
+  hitSound = new Audio('media/hit.mp3');
+  missSound.preload = 'auto';
+  hitSound.preload = 'auto';
 
   initializeNotes();
   setupStartButton();
