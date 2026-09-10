@@ -2,7 +2,9 @@ var q = {
   color: 'rgba(218, 165, 32, 1)',
   next: 0,
   notes: [
-    { duration: 0.9, delay: 7.8}
+    { duration: 0.9, delay: 6.5},
+    { duration: 0.9, delay: 7.5},
+    { duration: 0.9, delay: 8.0}
   ]
 };
 
@@ -10,7 +12,9 @@ var w = {
   color: 'rgba(218, 165, 32, 1)',
   next: 0,
   notes: [
-    { duration: 0.9, delay: 11.3}
+    { duration: 0.9, delay: 10.5},
+    { duration: 0.9, delay: 11.5},
+    { duration: 0.9, delay: 12.5}
   ]
 };
 
@@ -18,11 +22,13 @@ var e = {
   color: 'rgba(218, 165, 32, 1)',
   next: 0,
   notes: [
-    { duration: 0.9, delay: 15.3}
+    { duration: 0.9, delay: 14.5},
+    { duration: 0.9, delay: 15.0},
+    { duration: 0.9, delay: 16.0}
   ]
 };
 
 var song = {
-  duration: 17,
+  duration: 18,
   sheet: [q, w, e]
 };
