@@ -71,6 +71,8 @@ var keypress;
 var comboText;
 var missSound;
 var hitSound;
+var hitNoPerfectSound;
+var playerName = '';
 
 var initializeNotes = function () {
   var noteElement;
@@ -106,6 +108,8 @@ var initializeNotes = function () {
 
 var setupStartButton = function () {
   var startButton = document.querySelector('.btn--start');
+  var nameInput = document.querySelector('.start__name');
+  var status = document.querySelector('.start__status');
 
   startButton.addEventListener('click', function (event) {
     event.preventDefault();
@@ -113,6 +117,16 @@ var setupStartButton = function () {
     if (isPlaying) {
       return;
     }
+
+    var name = nameInput.value.trim();
+    if (!name) {
+      status.innerHTML = 'Escribe un nombre para comenzar.';
+      nameInput.focus();
+      return;
+    }
+
+    playerName = name;
+    status.innerHTML = '';
 
     isPlaying = true;
     startTime = performance.now();
@@ -191,6 +205,7 @@ var finishGame = function () {
   });
 
   showResult();
+  sendResultToDiscord();
 
   comboText.style.transition = 'all 1s';
   comboText.style.opacity = 0;
@@ -212,26 +227,15 @@ var showResult = function () {
 };
 
 var sendResultToDiscord = function () {
-  var nameInput = document.querySelector('.result__name');
-  var status = document.querySelector('.result__status');
-
-  var name = nameInput.value.trim();
-
-  if (!name) {
-    status.innerHTML = 'Escribe un nombre.';
-    nameInput.focus();
-    return;
-  }
-
   var message = {
-    username: 'Rhythm',
+    username: 'A warm place - Dnd + Parry',
     embeds: [{
       title: 'Resultado - ' + document.title,
       color: 0x5865F2,
       fields: [
         {
           name: 'Jugador',
-          value: name,
+          value: playerName,
           inline: false
         },
         {
@@ -268,8 +272,6 @@ var sendResultToDiscord = function () {
     }]
   };
 
-  status.innerHTML = 'Enviando...';
-
   fetch(DISCORD_WEBHOOK, {
     method: 'POST',
     headers: {
@@ -282,13 +284,10 @@ var sendResultToDiscord = function () {
         throw new Error('Error al enviar');
       }
 
-      status.innerHTML = 'Enviado.';
-      nameInput.disabled = true;
       document.querySelector('.result__send').disabled = true;
     })
     .catch(function (error) {
       console.error(error);
-      status.innerHTML = 'No se pudo enviar el resultado.';
     });
 };
 
@@ -423,15 +422,15 @@ var judge = function (index) {
 };
 
 var getHitJudgement = function (accuracy) {
-  if (accuracy < 0.1) {
+  if (accuracy < 0.15) {
     return 'perfect';
   }
 
-  if (accuracy < 0.2) {
+  if (accuracy < 0.25) {
     return 'good';
   }
 
-  if (accuracy < 0.3) {
+  if (accuracy < 0.35) {
     return 'bad';
   }
 
@@ -502,6 +501,9 @@ var playHitSound = function (judgement) {
   if (!hitSound) {
     return;
   }
+  if (!hitNoPerfectSound){
+    return;
+  }
 
   if (
     judgement !== 'perfect' &&
@@ -511,10 +513,20 @@ var playHitSound = function (judgement) {
     return;
   }
 
-  hitSound.currentTime = 0;
-  hitSound.play().catch(function (error) {
-    console.error('No se pudo reproducir el sonido de acierto:', error);
-  });
+  if (judgement == 'perfect')
+  {
+    hitSound.currentTime = 0;
+    hitSound.play().catch(function (error) {
+      console.error('No se pudo reproducir el sonido de acierto:', error);
+    });
+  } else
+  {
+    hitNoPerfectSound.currentTime = 0;
+    hitNoPerfectSound.play().catch(function (error) {
+      console.error('No se pudo reproducir el sonido de acierto:', error);
+    });
+  }
+
 };
 
 var playMissSound = function () {
@@ -575,6 +587,7 @@ window.onload = function () {
 
     missSound = new Audio('media/miss.mp3');
     hitSound = new Audio('media/hit.mp3');
+    hitNoPerfectSound = new Audio('media/hitNoPerfect.mp3');
 
     missSound.preload = 'auto';
     hitSound.preload = 'auto';

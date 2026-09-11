@@ -118,7 +118,7 @@ h2 {
 
 .key-container {
   display: flex;
-  flex: 0 0 15%;
+  flex: 0 0 18%;
 }
 
 .key {
@@ -307,16 +307,7 @@ h2 {
   transition: all 2s;
 }
 
-.result__submit {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 1.2rem;
-  margin-top: 2rem;
-  pointer-events: auto;
-}
-
-.result__name {
+.start__name {
   width: 80%;
   max-width: 30rem;
   padding: 1.2rem 1.5rem;
